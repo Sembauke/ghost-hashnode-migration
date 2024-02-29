@@ -4,6 +4,8 @@ import { gql, GraphQLClient } from "graphql-request";
 const ghost_key = process.env.GHOST_KEY;
 const ghost_url = process.env.GHOST_URL;
 
+const publicationId = process.env.HASHNODE_PUBLICATION_ID;
+
 const hashnode_key = process.env.HASHNODE_PAT;
 
 let currentPage = 1;
@@ -32,7 +34,7 @@ const createNewPost = async (ghostPost) => {
   const { title, slug, html, feature_image, published_at, tags } = ghostPost;
 
   const formattedData = {
-    publicationId: "64cb616d38b248b9c360ac8b",
+    publicationId: publicationId,
     title: title,
     slug: slug,
     contentMarkdown: html,
