@@ -6,33 +6,50 @@ const ghost_url = process.env.GHOST_URL;
 
 const hashnode_key = process.env.HASHNODE_PAT;
 
-const migrate = async () => {
+let currentPage = 1;
+
+const migrate = async (page) => {
   const author = "jessica-wilkins";
-  const posts = `${ghost_url}/posts/?key=${ghost_key}&filter=author:${author}`;
+  const posts = `${ghost_url}/posts/?key=${ghost_key}&filter=author:${author}&include=tags&page=${page}`;
 
-  let currentPage = 1;
-
+  // TODO - add error handling
   const response = await fetch(posts);
+  const data = await response.json();
 
-  if (response.status === 200) {
-    const data = await response.json();
+  const totalPages = data.meta.pagination.pages;
 
-    for (const post of data.posts) {
-      createNewPost(post);
-    }
-  } else {
-    console.log("DIED AT FETCHING POSTS", response, "PAGE:", currentPage);
+  for (const post of data.posts) {
+    createNewPost(post);
+  }
+  currentPage++;
+
+  if(currentPage <= totalPages) {
+    migrate(currentPage);
   }
 };
 
 const createNewPost = async (ghostPost) => {
-  const { title, slug, html } = ghostPost;
+  const { title, slug, html, feature_image, published_at, tags } = ghostPost;
 
   const formattedData = {
     publicationId: "64cb616d38b248b9c360ac8b",
     title: title,
     slug: slug,
     contentMarkdown: html,
+    publishedAt: published_at,
+    coverImageOptions: {
+      coverImageURL: feature_image,
+    },
+    // TODO: tags need to be added to hashnode blog.
+    // tags: [
+    //   ...tags.map((tag) => {
+    //     return {
+    //       id: tag.id,
+    //       slug: tag.slug,
+    //       name: tag.name
+    //     }
+    //   })
+    // ],
   };
 
   const query = gql`
@@ -40,8 +57,7 @@ const createNewPost = async (ghostPost) => {
       publishPost(input: $input) {
         post {
           title
-          slug,
-        
+          slug
         }
       }
     }
@@ -60,4 +76,4 @@ const createNewPost = async (ghostPost) => {
   console.log(data);
 };
 
-migrate();
+migrate(1);
